@@ -77,23 +77,13 @@ public class Iperfer {
 
 		System.out.println("Waiting for client connection");
 		Socket clientSoc = serverSoc.accept();
-		PrintWriter out = new PrintWriter(clientSoc.getOutputStream(), true);
 		DataInputStream in = new DataInputStream(clientSoc.getInputStream());
 		long start = System.currentTimeMillis();
 
 		long b_received = 0;
 		byte[] data = new byte[1000];
-		while(in.read(data) > 0) {
-			boolean check = true;
-			for(byte i : data)
-				if(i != 0) {
-					System.out.println("data corrupted");
-					check = false;
-				}
-
-			if(check) {
-				b_received += 1000;
-			}
+		while(in.read(data) != -1) {
+			b_received += 1000;
 		}
 
 		long mb = b_received / 1000;
