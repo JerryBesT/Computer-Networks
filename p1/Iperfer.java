@@ -7,7 +7,7 @@ CS640 Spring 2017
 */
 import java.io.*;
 import java.net.*;
-import java.*;
+import java.util.*;
 
 public class Iperfer {
 
@@ -16,9 +16,9 @@ public class Iperfer {
 		System.exit(1);
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException{
 		int arg_num = args.length;
-		if (arg_num != 7 || arg_num != 3)
+		if (arg_num != 7 && arg_num != 3)
 			err("Error: invalid arguments");
 
 		// client mode
@@ -51,11 +51,10 @@ public class Iperfer {
 		}
 	}
 
-	public static void client(String hostname, int port, int time) {
-		Socket clientSoc = new Socket(host, portNumber);
-		OutputStream out = clientSoc.getOutputStream();
+	public static void client(String hostname, int port, int time) throws IOException {
+		Socket clientSoc = new Socket(hostname, port);
+		DataOutputStream out = new DataOutputStream(clientSoc.getOutputStream());
 		BufferedReader in = new BufferedReader (new InputStreamReader (clientSoc.getInputStream()));
-		BufferedReader stdIn = new BufferedReader (new InputStreamReader (System.in));
 		long end = System.currentTimeMillis() + time * 1000;
 
 		int b_sent = 0;
@@ -71,20 +70,35 @@ public class Iperfer {
 		return;
 	}
 
-	public static void server(int port) {
-		int serverPort = Integer.parseInt(args[0]);
+	public static void server(int port) throws IOException {
+		int serverPort = port;
 		ServerSocket serverSoc = new ServerSocket(serverPort);
 
 		System.out.println("Waiting for client connection");
 		Socket clientSoc = serverSoc.accept();
 		PrintWriter out = new PrintWriter(clientSoc.getOutputStream(), true);
-		BufferedReader in = new BufferedReader( new InputStreamReader(clientSoc.getInputStream()));
+		DataInputStream in = new DataInputStream(clientSoc.getInputStream());
+		long start = System.currentTimeMillis();
 
-		String text;
-		while ((text = in.readLine()) != null){
-			System.out.println("Server side receiving: " + text);
-			out.println(text);
+		int b_received = 0;
+		while(in.readInt() == 1000) {
+			byte[] data = new byte[1000];
+			in.readFully(data, 0, 1000);
+			boolean check = false;
+			for(byte i : data)
+				if(i != 0)
+					System.out.println("data corrupted");
+					
+			if(check) {
+				b_received += 1000;
+				System.out.println("Server side received a chunk");
+			}
 		}
 
+		int mb = b_received / 1000;
+		long time = (System.currentTimeMillis() - start) / 1000;
+		long mbps = mb * 8 / time;
+		System.out.println("received=" + mb + " KB rate=" + mbps + " Mbps");
+		return;
 	}
 }
