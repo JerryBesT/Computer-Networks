@@ -1,10 +1,6 @@
-// hahah
-// blahblahblah
-// blahblahblah
-
 /*
-CS640 Spring 2017
-*/
+	 CS640 Spring 2017
+ */
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -34,7 +30,7 @@ public class Iperfer {
 			int port = Integer.parseInt(args[4]);
 			if(port < 1024 || port > 65535)
 				err("Error: port number must be in the range 1024 to 65536");
-			
+
 			client(host, port, time);
 		}
 
@@ -53,14 +49,16 @@ public class Iperfer {
 
 	public static void client(String hostname, int port, int time) throws IOException {
 		Socket clientSoc = new Socket(hostname, port);
-		DataOutputStream out = new DataOutputStream(clientSoc.getOutputStream());
-		BufferedReader in = new BufferedReader (new InputStreamReader (clientSoc.getInputStream()));
+
+		ObjectOutputStream outStream = new ObjectOutputStream(clientSoc.getOutputStream());
+
 		long end = System.currentTimeMillis() + time * 1000;
 
 		long b_sent = 0;
-		while(System.currentTimeMillis() < end) {
-			byte[] data = new byte[1000];	
-			out.write(data, 0, 1000);
+
+		while(System.currentTimeMillis() < end) {  
+			byte[] data = new byte[1000];
+			outStream.writeObject(data);
 			b_sent += 1000;
 		}
 
@@ -77,13 +75,22 @@ public class Iperfer {
 
 		System.out.println("Waiting for client connection");
 		Socket clientSoc = serverSoc.accept();
-		DataInputStream in = new DataInputStream(clientSoc.getInputStream());
-		long start = System.currentTimeMillis();
+		ObjectInputStream in = new ObjectInputStream(clientSoc.getInputStream());
 
+		long start = System.currentTimeMillis();
 		long b_received = 0;
-		byte[] data = new byte[1000];
-		while(in.read(data) != -1) {
-			b_received += 1000;
+
+		try{
+			byte[] data = new byte[1000];
+			while(true) {
+				data = (byte[]) in.readObject();
+				b_received += 1000;
+			}
+
+		} catch (IOException e) {
+
+		} catch (ClassNotFoundException cn) {
+			cn.printStackTrace();
 		}
 
 		long mb = b_received / 1000;
